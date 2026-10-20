@@ -21,6 +21,12 @@ const EnvSchema = z.object({
   EMBEDDING_MODEL: z.string().optional(),
   OLLAMA_NUM_CTX: z.string().default("8192").transform((v) => parseInt(v, 10)),
   OLLAMA_KEEP_ALIVE: z.string().default("5m"),
+  // Timeouts in ms (TS-only: Python's Ollama client has none). Request = total for
+  // non-streaming calls; stream idle = longest gap between streamed chunks, incl. the first.
+  OLLAMA_REQUEST_TIMEOUT_MS: z.string().default("300000").transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().positive()),
+  OLLAMA_STREAM_IDLE_TIMEOUT_MS: z.string().default("120000").transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().positive()),
 
   // Security (same three variables as Python's settings.allowed_api_keys; no
   // default key - with none configured, protected routes refuse every request)
@@ -82,6 +88,8 @@ export const config = {
     embeddingModel: env.OLLAMA_EMBEDDING_MODEL || env.EMBEDDING_MODEL || "nomic-embed-text",
     numCtx: env.OLLAMA_NUM_CTX,
     keepAlive: env.OLLAMA_KEEP_ALIVE,
+    requestTimeoutMs: env.OLLAMA_REQUEST_TIMEOUT_MS,
+    streamIdleTimeoutMs: env.OLLAMA_STREAM_IDLE_TIMEOUT_MS,
   },
 
   security: {
