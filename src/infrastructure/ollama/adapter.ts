@@ -5,6 +5,19 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * Generation options sent on every chat call - identical to Python's
+ * app/infrastructure/ollama/adapter.py `_get_ollama_options()`.
+ */
+export function getOllamaOptions() {
+  return {
+    repeat_penalty: 1.15,
+    repeat_last_n: 64,
+    temperature: 0.7,
+    num_ctx: config.ollama.numCtx,
+  };
+}
+
 export class OllamaAdapter {
   private baseUrl: string;
 
@@ -25,9 +38,7 @@ export class OllamaAdapter {
         messages,
         stream: false,
         keep_alive: config.ollama.keepAlive,
-        options: {
-          num_ctx: config.ollama.numCtx,
-        },
+        options: getOllamaOptions(),
       }),
       signal,
     });
@@ -53,9 +64,7 @@ export class OllamaAdapter {
         messages,
         stream: true,
         keep_alive: config.ollama.keepAlive,
-        options: {
-          num_ctx: config.ollama.numCtx,
-        },
+        options: getOllamaOptions(),
       }),
       signal,
     });

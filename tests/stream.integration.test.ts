@@ -3,15 +3,29 @@ import { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 
-// Fake Ollama /api/chat: streams TOTAL_TOKENS NDJSON tokens, TOKEN_DELAY_MS apart,
-// and records how many it sent before the connection closed.
+// Fake Ollama /api/chat. With `stream: false` it returns one JSON message, like the
+// real API; otherwise it streams TOTAL_TOKENS NDJSON tokens, TOKEN_DELAY_MS apart, and
+// records how many it sent before the connection closed. Every request body is kept.
 const TOTAL_TOKENS = 30;
 const TOKEN_DELAY_MS = 50;
-const upstream = { tokensSent: 0, closed: Promise.resolve() };
+const upstream = {
+  tokensSent: 0,
+  closed: Promise.resolve(),
+  requests: [] as Array<Record<string, any>>,
+};
 
 const mockOllama = http.createServer((req, res) => {
-  req.resume();
+  let raw = "";
+  req.on("data", (chunk) => (raw += chunk));
   req.on("end", async () => {
+    const payload = JSON.parse(raw || "{}");
+    upstream.requests.push(payload);
+    if (payload.stream === false) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: { role: "assistant", content: "non-stream reply" }, done: true }));
+      return;
+    }
+
     upstream.tokensSent = 0;
     let markClosed!: () => void;
     upstream.closed = new Promise((r) => (markClosed = r));
@@ -27,6 +41,21 @@ const mockOllama = http.createServer((req, res) => {
   });
 });
 
+// Python parity: app/core/config.py (ollama_keep_alive, ollama_num_ctx) and
+// app/infrastructure/ollama/adapter.py `_get_ollama_options()`
+const PYTHON_GENERATION_SETTINGS = {
+  keep_alive: "5m",
+  options: { repeat_penalty: 1.15, repeat_last_n: 64, temperature: 0.7, num_ctx: 8192 },
+};
+
+// Requests from earlier tests can still arrive (e.g. a cancelled stream), so find the
+// one whose last message is this test's own text rather than assuming a count.
+function requestFor(message: string) {
+  const matches = upstream.requests.filter((r) => r.messages?.at(-1)?.content === message);
+  expect(matches).toHaveLength(1);
+  return matches[0];
+}
+
 let server: FastifyInstance;
 let baseUrl: string;
 
@@ -36,6 +65,8 @@ beforeAll(async () => {
 
   // config.ts reads the environment once at import time, so set it before importing the app
   process.env.OLLAMA_BASE_URL = `http://127.0.0.1:${ollamaPort}`;
+  delete process.env.OLLAMA_NUM_CTX; // exercise the defaults, which must match Python's
+  delete process.env.OLLAMA_KEEP_ALIVE;
   process.env.API_KEY = "test-key";
   process.env.NODE_ENV = "test";
   process.env.CORS_ALLOWED_ORIGINS = "https://app.example";
@@ -51,11 +82,11 @@ afterAll(async () => {
   await new Promise((r) => mockOllama.close(r));
 });
 
-function postStream(headers: Record<string, string> = {}, signal?: AbortSignal) {
+function postStream(headers: Record<string, string> = {}, signal?: AbortSignal, message = "hey how's it going") {
   return fetch(`${baseUrl}/api/v1/chat/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-API-Key": "test-key", ...headers },
-    body: JSON.stringify({ message: "hey how's it going" }),
+    body: JSON.stringify({ message }),
     signal,
   });
 }
@@ -93,6 +124,27 @@ describe("POST /api/v1/chat/stream (against a fake Ollama)", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBeNull();
     await res.body?.cancel();
+  });
+
+  it("sends Python's generation options on the streaming path", async () => {
+    const message = "options check (stream)";
+    const res = await postStream({}, undefined, message);
+    await res.text();
+
+    expect(requestFor(message)).toMatchObject({ stream: true, ...PYTHON_GENERATION_SETTINGS });
+  });
+
+  it("sends Python's generation options on the non-streaming /chat path", async () => {
+    const message = "options check (non-stream)";
+    const res = await fetch(`${baseUrl}/api/v1/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+      body: JSON.stringify({ message }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).response).toBe("non-stream reply");
+
+    expect(requestFor(message)).toMatchObject({ stream: false, ...PYTHON_GENERATION_SETTINGS });
   });
 
   it("cancels the upstream Ollama generation when the client disconnects", async () => {
