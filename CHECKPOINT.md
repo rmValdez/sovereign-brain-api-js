@@ -2,7 +2,9 @@
 
 > **STATUS**: CHECKPOINT 1 — SECURITY + STREAMING HARDENED, TESTED AGAINST A FAKE OLLAMA, TRACKER CORRECTED
 > **TIMESTAMP**: 2026-10-21
-> **GIT**: Repository initialized on `master`, **no commits yet** — everything below is uncommitted
+> **GIT**: Baseline in PR #1 (`feat/hardening-baseline` → `main`); generation-options fix in PR #2
+> (`test/ollama-options`, stacked on PR #1)
+> **TRACKING**: GitHub project [sovereign-mind](https://github.com/users/rmValdez/projects/2) — 57 issues
 > **REFERENCE BACKEND**: `soveriegn-brain-api-py` (FastAPI, port `3009`) — the behavioral ground truth
 
 ---
@@ -28,8 +30,8 @@ This checkpoint marks the point where the scaffold stopped being a demo:
 | TypeScript | ✅ 0 errors | `npx tsc --noEmit` |
 | Classifier (Python's own tests, ported verbatim) | ✅ 17 / 17 | `pnpm test` |
 | Config / API-key handling | ✅ 3 / 3 | `tests/config.test.ts` |
-| Stream integration vs fake Ollama | ✅ 5 / 5 | `tests/stream.integration.test.ts` |
-| **Total** | ✅ **25 / 25** | |
+| Stream integration vs fake Ollama | ✅ 7 / 7 | `tests/stream.integration.test.ts` |
+| **Total** | ✅ **27 / 27** | |
 | Against a real Ollama + Postgres | ⚪ Not run | — |
 | Parity vs Python with identical payloads | ⚪ Classifier only | Milestone 5 harness not built |
 
@@ -80,16 +82,19 @@ This checkpoint marks the point where the scaffold stopped being a demo:
 
 ## 5. Work In Progress at This Checkpoint
 
-- **2.7 Ollama generation options — implemented, not yet tested.** `OLLAMA_NUM_CTX` (8192) and
-  `OLLAMA_KEEP_ALIVE` (`5m`) are in `config.ts`, and [adapter.ts](src/infrastructure/ollama/adapter.ts)
-  now sends `keep_alive` and `options.num_ctx` from both `chat()` and `streamChat()`, as Python does
-  (`app/infrastructure/ollama/adapter.py`). No test asserts the request body yet.
+- **2.7 Ollama generation options — done (Verified).** Checking Python showed it sends more than
+  `num_ctx`: every call also sets `temperature 0.7`, `repeat_penalty 1.15`, `repeat_last_n 64`
+  (`adapter.py` `_get_ollama_options()`). TS sent only `num_ctx`, so it ran at Ollama's default
+  sampling settings. [adapter.ts](src/infrastructure/ollama/adapter.ts) now has `getOllamaOptions()`
+  with Python's exact values plus `keep_alive: 5m`, on both `chat()` and `streamChat()`. Two new tests
+  assert the full request body on each path; both fail against the old adapter.
 
 ## 6. Next Steps (in order)
 
-1. **Commit this checkpoint** on a task branch (per `AGENTS.md`), e.g. `fix/hardening-baseline`.
-2. Verify **2.7**: extend the fake Ollama in `tests/stream.integration.test.ts` to record the request
-   body and assert `keep_alive` and `options.num_ctx` arrive.
+1. **Merge PR #1, then PR #2** (GitHub retargets #2 to `main` once #1 merges), then
+   `git checkout main && git pull`.
+2. **Docs:** replace `docs/IMPLEMENTATION_PLAN.md` with the revised Milestone 1-6 plan, with the agreed
+   corrections (issue `[api-js] Replace IMPLEMENTATION_PLAN.md…`).
 3. **2.4** Configurable Ollama timeouts.
 4. **2.6** Record what Python actually emits when a stream fails mid-way (it has no error frame — only
    `session` and `confirmation` frames), then match it.
@@ -100,7 +105,18 @@ This checkpoint marks the point where the scaffold stopped being a demo:
 Optional doc cleanup still pending a decision: drop the "(Phase N)" labels from the milestone headings in
 `docs/IMPLEMENTATION_PLAN.md`, since the architecture doc numbers its phases differently.
 
-## 7. Rules That Hold From Here
+## 7. Work Tracking
+
+All Sovereign work is on the GitHub project [sovereign-mind](https://github.com/users/rmValdez/projects/2):
+
+- Kanban tabs: **All**, **api-js**, **api-py**, **app**, **extension**, **cross-repo**.
+- Fields: Status, Priority (P0-P2), Size (XS-XL), Area.
+- 57 issues labeled `sovereign-brain`, titles prefixed by repo (`[api-js]`, `[app]`, `[cross-repo]`).
+- Milestone parents with sub-issues: api-js #2 (M1), #12 (M2), #20 (M3), #28 (M4), #38 (M5);
+  project-sovereign #3 (M6). Current focus: api-js Milestone 2 (P0 + Ready).
+- This file and `docs/IMPLEMENTATION_PLAN.md` record the evidence; the board tracks the work.
+
+## 8. Rules That Hold From Here
 
 - Python is the reference: fix TS to match it, or record the difference in the tracker.
 - Tick a box only with evidence — a test for **Verified**, an identical-payload comparison with Python

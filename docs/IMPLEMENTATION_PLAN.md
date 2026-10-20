@@ -62,7 +62,7 @@
 | **2.4 Configurable Timeout Guard** | [ ] | [ ] | [ ] | Prevents hung Ollama requests |
 | **2.5 Port Golden SSE Fixtures from Python** | [ ] | [ ] | [ ] | Compare recorded Python stream lines against TypeScript |
 | **2.6 Mid-Stream Failure Behavior** | [ ] | [ ] | [ ] | A failure after the session frame currently just closes the connection. Python has no dedicated error frame (only `session` and `confirmation` frames, `orchestrator.py:300/387`) — record what Python actually emits on failure before choosing TS behavior |
-| **2.7 Ollama Generation Options** | [x] | [x] | [x] | Python sends `num_ctx: 8192` and `keep_alive: 5m` (`OLLAMA_NUM_CTX`, `OLLAMA_KEEP_ALIVE`); TS now sends both in `chat` and `streamChat` |
+| **2.7 Ollama Generation Options** | [x] | [x] | [ ] | Same as Python on both `chat` and `streamChat`: `keep_alive: 5m` and `options` = `repeat_penalty 1.15`, `repeat_last_n 64`, `temperature 0.7`, `num_ctx 8192` (`adapter.py` `_get_ollama_options()`). The three non-ctx options were missing until now. Tested against the fake Ollama; parity needs a side-by-side run |
 
 *Exit Condition for Milestone 2*: Streams cleanly handle tokens, errors, client aborts, and match Next.js `sse.ts` parser requirements.
 
