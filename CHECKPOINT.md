@@ -2,7 +2,7 @@
 
 > **STATUS**: CHECKPOINT 1 — SECURITY + STREAMING HARDENED, TESTED AGAINST A FAKE OLLAMA, TRACKER CORRECTED
 > **TIMESTAMP**: 2026-10-21
-> **GIT**: Baseline in PR #1 (`feat/hardening-baseline` → `main`); generation-options fix in PR #2
+> **GIT**: Baseline in PR #1 (`feat/hardening-baseline` → `main`); generation-options fix in PR #49
 > (`test/ollama-options`, stacked on PR #1)
 > **TRACKING**: GitHub project [sovereign-mind](https://github.com/users/rmValdez/projects/2) — 57 issues
 > **REFERENCE BACKEND**: `soveriegn-brain-api-py` (FastAPI, port `3009`) — the behavioral ground truth
@@ -91,7 +91,7 @@ This checkpoint marks the point where the scaffold stopped being a demo:
 
 ## 6. Next Steps (in order)
 
-1. **Merge PR #1, then PR #2** (GitHub retargets #2 to `main` once #1 merges), then
+1. **Merge PR #1, then PR #49** (GitHub retargets #49 to `main` once #1 merges), then
    `git checkout main && git pull`.
 2. **Docs:** replace `docs/IMPLEMENTATION_PLAN.md` with the revised Milestone 1-6 plan, with the agreed
    corrections (issue `[api-js] Replace IMPLEMENTATION_PLAN.md…`).
