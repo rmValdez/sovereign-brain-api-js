@@ -41,9 +41,10 @@ frontend, two independent backends, a side-by-side comparison, then a written ke
 | Config / API-key handling | ✅ 3 / 3 | `tests/config.test.ts` |
 | Security middleware (Python test_security.py parity) | ✅ 10 / 10 | `tests/security.test.ts` |
 | Request context extraction (Python context.py parity) | ✅ 9 / 9 | `tests/context.test.ts` |
+| Error sanitization (Python test_chat.py parity) | ✅ 3 / 3 | `tests/error-handler.test.ts` |
 | Stream integration vs fake Ollama | ✅ 8 / 8 | `tests/stream.integration.test.ts` |
 | Timeouts vs fake Ollama | ✅ 4 / 4 | `tests/timeouts.integration.test.ts` |
-| **Total** | ✅ **51 / 51** | `pnpm test` |
+| **Total** | ✅ **54 / 54** | `pnpm test` |
 | Against a real Ollama + Postgres | ⚪ Not run | — |
 | Parity vs Python with identical payloads | ⚪ Classifier only | Milestone 5 harness not built |
 
