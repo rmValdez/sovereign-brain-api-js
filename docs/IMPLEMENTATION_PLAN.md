@@ -45,7 +45,7 @@
 | **1.5 Port Python Classifier Tests Word-for-Word** (`tests/classifier.test.ts`) | [x] | [x] | [x] | Python's own test cases, ported verbatim (17 tests) — the only payload-level parity evidence so far |
 | **1.6 Editor-Context Classification** | [x] | [ ] | [ ] | Classifies the message *with* the editor block attached, as Python does (`orchestrator.py:194`). Deliberately not changed (Python Bug Rule) |
 | **1.7 Replace Fake Agent Completions with Honest Route** | [x] | [ ] | — | Mock `[AgentLoop]` string removed; tool tasks go to the model with a "tools not wired yet" notice. Parity N/A until Milestone 4 (Python runs real tools) |
-| **1.8 Model Routing** (`src/infrastructure/ollama/router.ts`) | [x] | [ ] | [ ] | CODING/DEBUGGING → coding model, COMPLEX_TASK → `hermes3:8b`, everything else → `qwen3:8b`. Matches Python `router.py` by code review; no tests |
+| **1.8 Model Routing** (`src/infrastructure/ollama/router.ts`) | [x] | [x] | [x] | CODING/DEBUGGING → coding model (`qwen3:8b`), COMPLEX_TASK → planner model (`hermes3:8b`), others → default chat model (`qwen3:8b`). Live config reading verified. Tested in `tests/router.test.ts` (5 tests) matching Python `test_model_router.py` |
 
 *Exit Condition for Milestone 1*: Invalid config exits immediately, missing API key returns 401, all classifier tests pass matching Python, and queries stream from real Ollama models with no fake placeholder text. (**Partially met**: 401, classifier parity and streaming verified — streaming only against a fake Ollama; fail-fast exit untested.)
 
