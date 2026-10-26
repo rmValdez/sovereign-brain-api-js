@@ -99,10 +99,15 @@ export const chatRoutes: FastifyPluginAsync = async (server: FastifyInstance) =>
         if (abortController.signal.aborted) break;
         reply.raw.write(chunk);
       }
-      reply.raw.end();
+      if (!reply.raw.writableEnded) reply.raw.end();
     } catch (err: any) {
+      // Python parity (orchestrator.py:300/387): an upstream failure mid-stream terminates
+      // the HTTP response cleanly without injecting dedicated error frames.
+      // Full error stays server-side in logs.
       request.log.error(err, "Chat stream failed");
-      reply.raw.end();
+      if (!reply.raw.writableEnded) {
+        reply.raw.end();
+      }
     }
   });
 };

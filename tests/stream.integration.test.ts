@@ -26,6 +26,14 @@ const mockOllama = http.createServer((req, res) => {
       return;
     }
 
+    if (payload.messages?.at(-1)?.content === "fail-mid-stream") {
+      res.writeHead(200, { "Content-Type": "application/x-ndjson" });
+      res.write(JSON.stringify({ message: { content: "early token " }, done: false }) + "\n");
+      await new Promise((r) => setTimeout(r, 20));
+      res.destroy(new Error("upstream crash"));
+      return;
+    }
+
     upstream.tokensSent = 0;
     let markClosed!: () => void;
     upstream.closed = new Promise((r) => (markClosed = r));
@@ -157,5 +165,26 @@ describe("POST /api/v1/chat/stream (against a fake Ollama)", () => {
 
     await upstream.closed;
     expect(upstream.tokensSent).toBeLessThan(TOTAL_TOKENS / 2);
+  });
+
+  it("terminates the stream cleanly without dedicated error frames when Ollama fails mid-stream", async () => {
+    // Python parity (orchestrator.py:300/387): Python has no dedicated error frame.
+    // An upstream failure after the session frame terminates the HTTP stream; the client
+    // retains the session frame and any leading tokens already flushed, without spurious
+    // error frames or JSON leaking into user chat.
+    const res = await postStream({}, undefined, "fail-mid-stream");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("text/event-stream");
+
+    const body = await res.text();
+    const frames = body.split("\n\n").filter(Boolean);
+    const sessionFrame = frames[0];
+    expect(sessionFrame.startsWith("data: ")).toBe(true);
+    const session = JSON.parse(sessionFrame.slice("data: ".length));
+    expect(session.type).toBe("session");
+
+    expect(body).toContain("early token ");
+    expect(body).not.toContain("error");
+    expect(body).not.toContain("Error");
   });
 });

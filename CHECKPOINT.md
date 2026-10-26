@@ -39,9 +39,9 @@ frontend, two independent backends, a side-by-side comparison, then a written ke
 | TypeScript | ✅ 0 errors | `npx tsc --noEmit` |
 | Classifier (Python's own tests, ported verbatim) | ✅ 17 / 17 | `tests/classifier.test.ts` |
 | Config / API-key handling | ✅ 3 / 3 | `tests/config.test.ts` |
-| Stream integration vs fake Ollama | ✅ 7 / 7 | `tests/stream.integration.test.ts` |
+| Stream integration vs fake Ollama | ✅ 8 / 8 | `tests/stream.integration.test.ts` |
 | Timeouts vs fake Ollama | ✅ 4 / 4 | `tests/timeouts.integration.test.ts` |
-| **Total** | ✅ **31 / 31** | `pnpm test` |
+| **Total** | ✅ **32 / 32** | `pnpm test` |
 | Against a real Ollama + Postgres | ⚪ Not run | — |
 | Parity vs Python with identical payloads | ⚪ Classifier only | Milestone 5 harness not built |
 
