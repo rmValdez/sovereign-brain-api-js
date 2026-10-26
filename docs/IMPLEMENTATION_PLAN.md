@@ -39,7 +39,7 @@
 | Task | Implemented | Verified | Parity-Verified | Notes |
 |---|:---:|:---:|:---:|---|
 | **1.1 Strict Zod Config Validation** (`src/core/config.ts`) | [x] | [x] | [ ] | Fails fast on invalid env. API keys: union of `API_KEY`, `BRAIN_API_KEY`, `API_KEYS` (+ JS alias `ALLOWED_API_KEYS`), **no default key** — matches Python `config.py` by code review. Key handling tested in `tests/config.test.ts`; fail-fast exit not yet tested |
-| **1.2 API Key Verification Middleware** (`src/core/security.ts`) | [x] | [ ] | [ ] | Constant-time comparison, ported from Python `verify_api_key`. Only the missing-key 401 is tested; Bearer, `?api_key=` and the "not configured" 500 are untested |
+| **1.2 API Key Verification Middleware** (`src/core/security.ts`) | [x] | [x] | [x] | Constant-time comparison, ported from Python `verify_api_key`. All credential sources (`X-API-Key`, Bearer, `?api_key=`), comma-separated `API_KEYS`, missing/invalid key 401s, unconfigured 500, and timing-safe equal guard tested in `tests/security.test.ts` (10 tests) matching `test_security.py` |
 | **1.3 Request Context Extraction** (`src/core/context.ts`) | [x] | [ ] | [ ] | Extracts `X-User-Id`, `X-Correlation-Id`, `X-Client-Type`. No tests |
 | **1.4 Exception Sanitization** (`src/core/error-handler.ts`) | [x] | [ ] | [ ] | Generic 500 body; full error logged server-side. No tests |
 | **1.5 Port Python Classifier Tests Word-for-Word** (`tests/classifier.test.ts`) | [x] | [x] | [x] | Python's own test cases, ported verbatim (17 tests) — the only payload-level parity evidence so far |
