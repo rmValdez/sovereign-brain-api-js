@@ -63,6 +63,7 @@
 | **2.5 Port Golden SSE Fixtures from Python** | [ ] | [ ] | [ ] | Compare recorded Python stream lines against TypeScript |
 | **2.6 Mid-Stream Failure Behavior** | [x] | [x] | [x] | Python parity verified: Python has no dedicated error frame (only `session` and `confirmation` frames; generator exception terminates connection via Starlette). TS logs error server-side and terminates the stream cleanly with whatever was flushed, tested in `tests/stream.integration.test.ts` |
 | **2.7 Ollama Generation Options** | [x] | [x] | [ ] | Same as Python on both `chat` and `streamChat`: `keep_alive: 5m` and `options` = `repeat_penalty 1.15`, `repeat_last_n 64`, `temperature 0.7`, `num_ctx 8192` (`adapter.py` `_get_ollama_options()`). The three non-ctx options were missing until now. Tested against the fake Ollama; parity needs a side-by-side run |
+| **2.8 Next.js SSE Parser Alignment** | [x] | [x] | [x] | Verified against Next.js `sse.ts` parser logic: session frame routing, confirmation mapping, token accumulation, 2-byte chunk boundary splitting, and unrecognized event type safety. Tested in `tests/sse-parser.test.ts` (5 tests) |
 
 *Exit Condition for Milestone 2*: Streams cleanly handle tokens, errors, client aborts, and match Next.js `sse.ts` parser requirements.
 

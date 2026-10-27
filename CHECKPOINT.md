@@ -61,7 +61,8 @@ Next tasks up for tomorrow:
 | Timeouts vs fake Ollama | ✅ 4 / 4 | `tests/timeouts.integration.test.ts` |
 | App dependency injection | ✅ 1 / 1 | `tests/app-deps.test.ts` |
 | Editor context (Python test_editor_context.py parity) | ✅ 21 / 21 | `tests/editor-context.test.ts` |
-| **Total Test Suite** | ✅ **87 / 87 passed** | `pnpm test` (across 11 test files) |
+| Next.js SSE parser alignment | ✅ 5 / 5 | `tests/sse-parser.test.ts` |
+| **Total Test Suite** | ✅ **92 / 92 passed** | `pnpm test` (across 12 test files) |
 
 ---
 
@@ -92,6 +93,7 @@ Next tasks up for tomorrow:
 * ✅ Issue #9: Add model-router tests for every task type (PR #58)
 * ✅ Issue #14: Add configurable Ollama timeouts (PR #53)
 * ✅ Issue #15: Record Python's mid-stream failure behavior and match it (PR #54)
+* ✅ Issue #17: Test the stream against the Next.js SSE parser (PR #64)
 
 ---
 
