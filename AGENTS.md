@@ -1,6 +1,6 @@
 # Agent Guidelines & Repository Rules (`sovereign-brain-api-js`)
 
-> This file is read automatically by Antigravity, Claude, and agentic coding tools. It is the single source of truth for repository constraints, workflows, and standards.
+> This file is read automatically by Antigravity, Claude, and agentic coding tools. It is the single source of truth for repository constraints, workflows, and standards. For the Git/PR procedure, follow the `github-pr-workflow` skill in `.agents/skills/`; for layer rules and `pnpm validate`, follow `architecture-boundaries`.
 
 ---
 
@@ -87,6 +87,22 @@ gh pr create --base main --head staging
 - Drizzle ORM in this repository is a **schema consumer only** (`drizzle-kit introspect` / schema definitions).
 - Never run independent schema migrations from Drizzle against the shared database.
 
+### Layer Boundaries (enforced by `pnpm validate`)
+
+Same layout as `fox-passport-republic-api`: `src/core` (config, DB, security, shared contracts such as `LLMProvider` and `TaskType`), `src/infrastructure` (Ollama), and `src/modules/<feature>/` with the layer in the file name:
+
+| File | Role | May not import |
+|---|---|---|
+| `*.repository.ts` | database access only | services, controllers, routes |
+| `*.service.ts` | business logic | controllers, routes |
+| `*.controller.ts` | parse request, call a service, shape the response | routes, repositories |
+| `*.routes.ts` | Fastify wiring and `preHandler` guards | — |
+| `src/core`, `src/infrastructure` | shared plumbing | anything in `src/modules` |
+
+- Depend on `LLMProvider` (`src/core/llm.ts`), never on `OllamaAdapter` directly, except as a default.
+- Pass dependencies in (`buildServer({ orchestrator })`, constructor arguments); don't create singletons at module level.
+- Imports stay relative. `tsconfig.json` has no `paths` aliases, and the validator refuses to run if one is added.
+
 ### Cognitive Architecture Invariants
 1. **Zero-LLM Classifier**: `classifyTaskExplained()` must remain deterministic, instant, and cheap (zero LLM calls).
 2. **Model Router**:
@@ -111,13 +127,16 @@ gh pr create --base main --head staging
 Before declaring any task or milestone complete, run the required verification checks:
 
 ```bash
-# 1. Type check
+# 1. Layer boundaries
+pnpm validate
+
+# 2. Type check
 pnpm build
 
-# 2. Run unit and regression tests
+# 3. Run unit and regression tests
 pnpm test
 
-# 3. Development server boot check
+# 4. Development server boot check
 pnpm dev
 ```
 
@@ -135,7 +154,7 @@ At the conclusion of every milestone or task, output the structured completion r
 - **Branch**: `<current-branch>`
 - **Changes**: Summary of what was implemented or resolved.
 - **Files**: Modified, created, or deleted files.
-- **Verification**: Exact check results (`pnpm build`, `pnpm test`).
+- **Verification**: Exact check results (`pnpm validate`, `pnpm build`, `pnpm test`).
 - **Git status**: Clean / uncommitted status and commit hash if committed.
 - **Parity Status**: `Implemented` / `Verified` / `Parity-Verified`.
 - **Risks & Next Steps**: Immediate follow-up tasks.

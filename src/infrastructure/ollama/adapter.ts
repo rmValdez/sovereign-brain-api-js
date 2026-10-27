@@ -1,9 +1,7 @@
 import { config } from "../../core/config.js";
+import { ChatMessage, LLMProvider } from "../../core/llm.js";
 
-export interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type { ChatMessage };
 
 /**
  * Generation options sent on every chat call - identical to Python's
@@ -31,7 +29,7 @@ function withTimeout(timeout: AbortSignal, signal?: AbortSignal): AbortSignal {
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
-export class OllamaAdapter {
+export class OllamaAdapter implements LLMProvider {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {

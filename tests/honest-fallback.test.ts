@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BrainOrchestrator } from "../src/modules/brain/orchestrator.js";
+import { BrainOrchestrator } from "../src/modules/brain/orchestrator.service.js";
 import { OllamaAdapter } from "../src/infrastructure/ollama/adapter.js";
 
 const HONEST_TOOL_NOTICE =

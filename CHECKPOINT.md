@@ -97,3 +97,53 @@ Next tasks up for tomorrow:
 - **Python is Ground Truth**: When behavior differs, verify against `soveriegn-brain-api-py`.
 - **Drizzle Schema Safety**: Drizzle never runs migrations against `:5434`. Alembic owns migrations.
 - **Evidence-Based Done**: Every issue requires an automated test in `tests/` and green execution.
+
+---
+
+## 6. Architecture Refactor — Foxpassport-Style Layering (2026-10-27)
+
+> **Branch**: `refactor/module-boundaries` (from `staging` @ `83d57ce`). **Committed** (`54fdf4e`), pushed, and submitted as **PR #61** targeting `staging`. The rest of this file describes `staging`; this section describes the branch.
+
+**Why.** A structure review found the code was mostly modular (one-way dependencies, no cycles, constructor injection) but had three flaws:
+1. `infrastructure/ollama/router.ts` imported `TaskType` from `modules/brain/classifier`, so the lowest layer depended on a feature.
+2. The orchestrator and context engine depended on the concrete `OllamaAdapter`; there was no LLM interface, unlike Python's `LLMProvider`.
+3. `chat/routes.ts` created `new BrainOrchestrator()` at module level, and `core/database.ts` opened its `pg` Pool on import, so neither could be injected.
+
+The layout was then aligned with `forhu/foxpassport/fox-passport-republic-api` (used as reference only, not modified).
+
+**What changed.**
+
+| Area | Before | After |
+|---|---|---|
+| Chat module | `modules/chat/routes.ts` (wiring and handlers mixed, option mapping duplicated), `schemas.ts` | `chat.routes.ts` (wiring and `verifyApiKey` guard only) → `chat.controller.ts` (parse, call service, SSE response; one shared `toProcessOptions`) → `chat.schemas.ts` |
+| Brain services | `orchestrator.ts`, `context.ts` | `orchestrator.service.ts`, `context.service.ts` (same names as Python's files, plus the layer suffix) |
+| LLM contract | none; concrete `OllamaAdapter` everywhere | `src/core/llm.ts`: `LLMProvider` + `ChatMessage`; `OllamaAdapter implements LLMProvider`; services type against the interface |
+| `TaskType` | `modules/brain/classifier.ts` | `src/core/task-type.ts`; `classifier.ts` re-exports it, so existing imports still work |
+| Wiring | module-level `new BrainOrchestrator()` | `buildServer(deps = {})` creates it (or takes `deps.orchestrator`) and passes it to `chatRoutes` as a plugin option |
+| DB | `export const dbPool = new Pool(...)` on import | `getDbPool()`, created on first use |
+| tsconfig | unused `@/*` path alias | removed: the checker can't follow aliases and refuses to run if one exists |
+| Checker | none | `tools/validate-architecture.mjs` (ported from foxpassport) and `pnpm validate`. Rules: repository ↛ service/controller/routes, service ↛ controller/routes, controller ↛ routes/repository, utils ↛ business layers, **`core`/`infrastructure` ↛ anything in `modules/`** (added for this repo). Also resolves NodeNext `.js` specifiers to `.ts` files |
+| Docs and skills | — | AGENTS.md: new "Layer Boundaries" table, `pnpm validate` added to verification and the completion report. `.agents/skills/github-pr-workflow` and `.agents/skills/architecture-boundaries` added |
+
+**Endpoints and behaviour are unchanged**: same URLs, same request/response shapes, same SSE frames, same error sanitization.
+
+**Verification (2026-10-27).**
+
+| Check | Result |
+|---|---|
+| `pnpm validate` | ✅ 18 files, 0 violations. Negative test: putting the old `infrastructure → modules/brain` import back makes it fail as expected |
+| `pnpm build` (`tsc`) | ✅ |
+| `pnpm test` | ✅ **63/63** across 10 files (62 existing + new `tests/app-deps.test.ts`, which injects a fake `LLMProvider` through `buildServer({ orchestrator })`) |
+| `pnpm dev` boot | ✅ `/health` 200; with `API_KEY` set: no key → 401, bad body → 400 on `/chat` and `/chat/stream`. Without `API_KEY`, `/chat` returns 500 "Server API key is not configured" by design (`core/security.ts`, unchanged) |
+| `pnpm lint` | ⛔ blocked: `eslint` isn't installed (pre-existing) |
+
+**Parity status:** Verified. Behaviour is unchanged; no side-by-side run against Python was made for this refactor.
+
+**Gotchas hit:**
+- `sed -i` on Windows rewrote CRLF to LF in every file it touched, and 7 test files showed as modified with no content change. They were restored with `git checkout`. Git stores LF, so the remaining LF working copies commit identically.
+- A server left running on `:8001` from an earlier boot check answered the second probe. Check `netstat -ano | grep :8001` before boot checks.
+
+**Next for this repo after merge:**
+- Install `eslint` (or remove the `lint` script).
+- Add `pnpm validate` to CI once a workflow exists.
+- When memory and sessions are ported, add `*.repository.ts` files. Python's 12 baseline violations (`soveriegn-brain-api-py/docs/architecture/LAYER_BOUNDARIES.md`) must not be ported along with the code.

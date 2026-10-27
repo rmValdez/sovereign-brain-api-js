@@ -1,4 +1,5 @@
-import { OllamaAdapter, ChatMessage } from "../../infrastructure/ollama/adapter.js";
+import { ChatMessage, LLMProvider } from "../../core/llm.js";
+import { OllamaAdapter } from "../../infrastructure/ollama/adapter.js";
 import { currentDateContextLine } from "./temporal.js";
 import { ProcessRecorder } from "./process-track.js";
 
@@ -6,9 +7,9 @@ const DEFAULT_SYSTEM_PROMPT = `You are Sovereign Brain, a local, privacy-first c
 You provide thoughtful, accurate, and direct responses grounded in user data and privacy.`;
 
 export class ContextEngine {
-  private llm: OllamaAdapter;
+  private llm: LLMProvider;
 
-  constructor(llm?: OllamaAdapter) {
+  constructor(llm?: LLMProvider) {
     this.llm = llm || new OllamaAdapter();
   }
 
