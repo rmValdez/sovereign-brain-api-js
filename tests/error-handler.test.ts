@@ -2,7 +2,7 @@ import Fastify, { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../src/core/config.js";
 import { globalErrorHandler } from "../src/core/error-handler.js";
-import { BrainOrchestrator } from "../src/modules/brain/orchestrator.js";
+import { BrainOrchestrator } from "../src/modules/brain/orchestrator.service.js";
 
 describe("Global error sanitization (globalErrorHandler)", () => {
   let app: FastifyInstance;

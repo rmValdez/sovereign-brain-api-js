@@ -1,7 +1,8 @@
+import { LLMProvider } from "../../core/llm.js";
 import { OllamaAdapter } from "../../infrastructure/ollama/adapter.js";
 import { selectModel } from "../../infrastructure/ollama/router.js";
 import { TaskType, classifyTaskExplained } from "./classifier.js";
-import { ContextEngine } from "./context.js";
+import { ContextEngine } from "./context.service.js";
 import { ProcessRecorder, ProcessStage, ProcessStatus } from "./process-track.js";
 
 export interface ProcessMessageOptions {
@@ -19,10 +20,10 @@ export interface ProcessMessageOptions {
 }
 
 export class BrainOrchestrator {
-  private llm: OllamaAdapter;
+  private llm: LLMProvider;
   private contextEngine: ContextEngine;
 
-  constructor(llm?: OllamaAdapter, contextEngine?: ContextEngine) {
+  constructor(llm?: LLMProvider, contextEngine?: ContextEngine) {
     this.llm = llm || new OllamaAdapter();
     this.contextEngine = contextEngine || new ContextEngine(this.llm);
   }

@@ -1,5 +1,5 @@
 import { config } from "../../core/config.js";
-import { TaskType } from "../../modules/brain/classifier.js";
+import { TaskType } from "../../core/task-type.js";
 
 /**
  * Task-to-model routing matching Python's app/infrastructure/ollama/router.py:

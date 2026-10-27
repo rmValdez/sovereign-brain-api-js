@@ -1,13 +1,7 @@
+import { TaskType } from "../../core/task-type.js";
 import { requiresFreshData, isSearchContinuation } from "./freshness.js";
 
-export enum TaskType {
-  CONVERSATION = "conversation",
-  QUESTION = "question",
-  CODING = "coding",
-  DEBUGGING = "debugging",
-  TOOL_OPERATION = "tool_operation",
-  COMPLEX_TASK = "complex_task",
-}
+export { TaskType };
 
 const FILE_OPS = ["write file", "save file", "create file", "read file", "delete file"];
 const DIRECTORY_OPS = [

@@ -1,11 +1,18 @@
 import Fastify, { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import { config } from "./core/config.js";
-import { chatRoutes } from "./modules/chat/routes.js";
+import { chatRoutes } from "./modules/chat/chat.routes.js";
 import { checkDatabaseConnection } from "./core/database.js";
 import { globalErrorHandler } from "./core/error-handler.js";
+import { BrainOrchestrator } from "./modules/brain/orchestrator.service.js";
 
-export async function buildServer(): Promise<FastifyInstance> {
+export interface ServerDeps {
+  orchestrator?: BrainOrchestrator;
+}
+
+export async function buildServer(deps: ServerDeps = {}): Promise<FastifyInstance> {
+  const orchestrator = deps.orchestrator ?? new BrainOrchestrator();
+
   const server = Fastify({
     logger: {
       level: config.nodeEnv === "development" ? "info" : "warn",
@@ -57,7 +64,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   });
 
   // Register API modules under /api/v1
-  await server.register(chatRoutes, { prefix: "/api/v1" });
+  await server.register(chatRoutes, { prefix: "/api/v1", orchestrator });
 
   return server;
 }
