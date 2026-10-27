@@ -51,7 +51,7 @@ Next tasks up for tomorrow:
 |---|---|---|
 | TypeScript compilation | ✅ 0 errors | `npx tsc --noEmit` |
 | Classifier (Python tests ported verbatim) | ✅ 17 / 17 | `tests/classifier.test.ts` |
-| Config / API-key handling | ✅ 3 / 3 | `tests/config.test.ts` |
+| Config & fail-fast startup exit | ✅ 6 / 6 | `tests/config.test.ts` |
 | Security middleware (Python test_security.py parity) | ✅ 10 / 10 | `tests/security.test.ts` |
 | Request context extraction (Python context.py parity) | ✅ 9 / 9 | `tests/context.test.ts` |
 | Error sanitization (Python test_chat.py parity) | ✅ 3 / 3 | `tests/error-handler.test.ts` |
@@ -61,7 +61,7 @@ Next tasks up for tomorrow:
 | Timeouts vs fake Ollama | ✅ 4 / 4 | `tests/timeouts.integration.test.ts` |
 | App dependency injection | ✅ 1 / 1 | `tests/app-deps.test.ts` |
 | Editor context (Python test_editor_context.py parity) | ✅ 21 / 21 | `tests/editor-context.test.ts` |
-| **Total Test Suite** | ✅ **84 / 84 passed** | `pnpm test` (across 11 test files) |
+| **Total Test Suite** | ✅ **87 / 87 passed** | `pnpm test` (across 11 test files) |
 
 ---
 
@@ -83,6 +83,7 @@ Next tasks up for tomorrow:
 
 ## 4. Closed Issues in This Sprint
 
+* ✅ Issue #3: Test fail-fast startup on invalid configuration (PR #63)
 * ✅ Issue #4: Test API key middleware: Bearer, `?api_key=`, invalid key, 'not configured' 500 (PR #55)
 * ✅ Issue #5: Add tests for request context extraction (PR #56)
 * ✅ Issue #6: Add tests for error sanitization in 500 responses (PR #57)

@@ -1,4 +1,9 @@
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Python parity: app/core/config.py settings.allowed_api_keys
 const KEY_VARS = ["API_KEY", "API_KEYS", "BRAIN_API_KEY", "ALLOWED_API_KEYS"] as const;
@@ -32,3 +37,60 @@ describe("API key configuration", () => {
     expect(await loadAllowedKeys({ API_KEY: "same", BRAIN_API_KEY: "same" })).toEqual(["same"]);
   });
 });
+
+describe("Fail-fast configuration exit (Issue #3)", () => {
+  const configScript = path.resolve(__dirname, "../src/core/config.ts");
+
+  it("exits with status 1 and readable error when invalid NODE_ENV is provided", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["--import", "tsx", configScript],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: "invalid_env_name",
+        },
+        encoding: "utf-8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Fatal Configuration Error: Invalid environment variables:");
+    expect(result.stderr).toContain("invalid_env_name");
+  });
+
+  it("exits with status 1 when timeout is negative", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["--import", "tsx", configScript],
+      {
+        env: {
+          ...process.env,
+          OLLAMA_REQUEST_TIMEOUT_MS: "-500",
+        },
+        encoding: "utf-8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Fatal Configuration Error: Invalid environment variables:");
+  });
+
+  it("exits with status 0 when environment is valid", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["--import", "tsx", configScript],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: "test",
+          PORT: "8005",
+        },
+        encoding: "utf-8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+  });
+});
+
