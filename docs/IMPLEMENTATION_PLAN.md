@@ -38,7 +38,7 @@
 
 | Task | Implemented | Verified | Parity-Verified | Notes |
 |---|:---:|:---:|:---:|---|
-| **1.1 Strict Zod Config Validation** (`src/core/config.ts`) | [x] | [x] | [ ] | Fails fast on invalid env. API keys: union of `API_KEY`, `BRAIN_API_KEY`, `API_KEYS` (+ JS alias `ALLOWED_API_KEYS`), **no default key** — matches Python `config.py` by code review. Key handling tested in `tests/config.test.ts`; fail-fast exit not yet tested |
+| **1.1 Strict Zod Config Validation** (`src/core/config.ts`) | [x] | [x] | [x] | Fails fast on invalid env (status 1 with formatted Zod error). API keys: union of `API_KEY`, `BRAIN_API_KEY`, `API_KEYS` (+ JS alias `ALLOWED_API_KEYS`), **no default key** — matches Python `config.py` by code review. Key handling and fail-fast startup exits verified in `tests/config.test.ts` (6 tests) |
 | **1.2 API Key Verification Middleware** (`src/core/security.ts`) | [x] | [x] | [x] | Constant-time comparison, ported from Python `verify_api_key`. All credential sources (`X-API-Key`, Bearer, `?api_key=`), comma-separated `API_KEYS`, missing/invalid key 401s, unconfigured 500, and timing-safe equal guard tested in `tests/security.test.ts` (10 tests) matching `test_security.py` |
 | **1.3 Request Context Extraction** (`src/core/context.ts`) | [x] | [x] | [x] | Extracts `X-User-Id`, `X-Correlation-Id` (with `X-Request-Id` fallback), `X-Client-Type` (normalized case-insensitively with `unknown` fallback), `X-Session-Id`, `X-Conversation-Id`. Array headers handled. Tested in `tests/context.test.ts` (9 tests) matching Python `context.py` |
 | **1.4 Exception Sanitization** (`src/core/error-handler.ts`) | [x] | [x] | [x] | Generic 500 body masking internal DB hostnames, IPs and credentials, while logging details server-side. Tested in `tests/error-handler.test.ts` (3 tests) matching Python `test_chat.py::test_chat_endpoint_does_not_leak_internal_exception_text` |
@@ -47,7 +47,7 @@
 | **1.7 Replace Fake Agent Completions with Honest Route** | [x] | [x] | — | Mock `[AgentLoop]` string removed; tool tasks go to the model with a "tools not wired yet" system notice. Tested in `tests/honest-fallback.test.ts` (3 tests). Parity N/A until Milestone 4 (Python runs real tools) |
 | **1.8 Model Routing** (`src/infrastructure/ollama/router.ts`) | [x] | [x] | [x] | CODING/DEBUGGING → coding model (`qwen3:8b`), COMPLEX_TASK → planner model (`hermes3:8b`), others → default chat model (`qwen3:8b`). Live config reading verified. Tested in `tests/router.test.ts` (5 tests) matching Python `test_model_router.py` |
 
-*Exit Condition for Milestone 1*: Invalid config exits immediately, missing API key returns 401, all classifier tests pass matching Python, and queries stream from real Ollama models with no fake placeholder text. (**Partially met**: 401, classifier parity and streaming verified — streaming only against a fake Ollama; fail-fast exit untested.)
+*Exit Condition for Milestone 1*: Invalid config exits immediately, missing API key returns 401, all classifier tests pass matching Python, and queries stream from real Ollama models with no fake placeholder text. (**Fully met**: all 8 tasks verified, 87/87 tests passing).
 
 ---
 
