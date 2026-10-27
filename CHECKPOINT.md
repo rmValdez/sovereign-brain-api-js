@@ -59,7 +59,9 @@ Next tasks up for tomorrow:
 | Honest tool fallback (no fake completions) | ✅ 3 / 3 | `tests/honest-fallback.test.ts` |
 | Stream integration vs fake Ollama | ✅ 8 / 8 | `tests/stream.integration.test.ts` |
 | Timeouts vs fake Ollama | ✅ 4 / 4 | `tests/timeouts.integration.test.ts` |
-| **Total Test Suite** | ✅ **62 / 62 passed** | `pnpm test` (across 9 test files) |
+| App dependency injection | ✅ 1 / 1 | `tests/app-deps.test.ts` |
+| Editor context (Python test_editor_context.py parity) | ✅ 21 / 21 | `tests/editor-context.test.ts` |
+| **Total Test Suite** | ✅ **84 / 84 passed** | `pnpm test` (across 11 test files) |
 
 ---
 
@@ -84,6 +86,7 @@ Next tasks up for tomorrow:
 * ✅ Issue #4: Test API key middleware: Bearer, `?api_key=`, invalid key, 'not configured' 500 (PR #55)
 * ✅ Issue #5: Add tests for request context extraction (PR #56)
 * ✅ Issue #6: Add tests for error sanitization in 500 responses (PR #57)
+* ✅ Issue #7: Compare editor-context classification with Python (PR #62)
 * ✅ Issue #8: Test honest tool fallback (no fake completion) (PR #59)
 * ✅ Issue #9: Add model-router tests for every task type (PR #58)
 * ✅ Issue #14: Add configurable Ollama timeouts (PR #53)

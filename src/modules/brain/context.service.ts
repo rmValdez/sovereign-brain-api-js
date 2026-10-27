@@ -1,4 +1,5 @@
 import { ChatMessage, LLMProvider } from "../../core/llm.js";
+import { TaskType } from "../../core/task-type.js";
 import { OllamaAdapter } from "../../infrastructure/ollama/adapter.js";
 import { currentDateContextLine } from "./temporal.js";
 import { ProcessRecorder } from "./process-track.js";
@@ -15,13 +16,157 @@ export class ContextEngine {
 
   isEditorContextRelevant(
     message: string,
-    hasSelection: boolean,
-    taskType: string,
+    hasSelection: boolean = false,
+    taskType?: TaskType | null,
   ): boolean {
-    if (hasSelection) return true;
-    const lower = message.toLowerCase();
-    const codeTriggers = ["explain", "refactor", "fix", "debug", "this code", "this file", "lines"];
-    return codeTriggers.some((t) => lower.includes(t));
+    const lower = message.trim().toLowerCase();
+    const tokenMatches = lower.match(/\b[a-z0-9_]+\b/g) || [];
+    const tokens = new Set(tokenMatches);
+
+    // Explicit technical / code-related task types
+    if (
+      taskType === TaskType.CODING ||
+      taskType === TaskType.DEBUGGING ||
+      taskType === TaskType.COMPLEX_TASK
+    ) {
+      return true;
+    }
+
+    // Tool operations that operate on code or files
+    const toolOps = [
+      "write file",
+      "save file",
+      "create file",
+      "read file",
+      "delete file",
+      "git status",
+      "git diff",
+      "git commit",
+      "git log",
+      "run test",
+    ];
+    if (toolOps.some((op) => lower.includes(op))) {
+      return true;
+    }
+
+    // Multi-word deictic or code phrases
+    const phrases = [
+      "explain this",
+      "what does this",
+      "how does this",
+      "fix this",
+      "look at this",
+      "review this",
+      "check this",
+      "my code",
+      "this code",
+      "this file",
+      "this function",
+      "this class",
+      "this error",
+      "this line",
+      "in my workspace",
+      "in this project",
+      "in this repo",
+      "in the file",
+      "pull request",
+      "unit test",
+      "write a function",
+      "add a feature",
+    ];
+    if (phrases.some((p) => lower.includes(p))) {
+      return true;
+    }
+
+    // Single word development keywords matching full tokens (not substrings like 'api' in 'capital')
+    const devTokens = new Set([
+      "def",
+      "class",
+      "fn",
+      "function",
+      "functions",
+      "refactor",
+      "implement",
+      "bug",
+      "bugs",
+      "syntax",
+      "import",
+      "imports",
+      "package",
+      "library",
+      "compile",
+      "compiler",
+      "runtime",
+      "traceback",
+      "exception",
+      "async",
+      "await",
+      "variable",
+      "variables",
+      "schema",
+      "schemas",
+      "endpoint",
+      "endpoints",
+      "api",
+      "apis",
+      "route",
+      "routes",
+      "database",
+      "databases",
+      "query",
+      "queries",
+      "sql",
+      "prisma",
+      "sqlalchemy",
+      "postgres",
+      "postgresql",
+      "json",
+      "yaml",
+      "toml",
+      "typescript",
+      "javascript",
+      "python",
+      "rust",
+      "golang",
+      "html",
+      "css",
+      "component",
+      "components",
+      "hook",
+      "hooks",
+      "interface",
+      "interfaces",
+      "struct",
+      "structs",
+      "enum",
+      "enums",
+      "repo",
+      "repository",
+      "workspace",
+      "git",
+      "diff",
+      "commit",
+      "branch",
+      "lint",
+    ]);
+    for (const t of tokens) {
+      if (devTokens.has(t)) return true;
+    }
+
+    // Deictic single tokens when selection or code is present
+    const deicticTokens = new Set(["this", "here", "above", "selection", "current", "explain"]);
+    if (hasSelection) {
+      for (const t of tokens) {
+        if (deicticTokens.has(t)) return true;
+      }
+    }
+
+    // Code snippets in backticks
+    if (message.includes("```") || message.includes("`")) {
+      return true;
+    }
+
+    return false;
   }
 
   async extractMemoryIfInstructed(

@@ -19,6 +19,29 @@ export interface ProcessMessageOptions {
   userCountry?: string | null;
 }
 
+const MAX_SELECTION_CHARS = 4000;
+
+export function buildEditorContextBlock(opts: ProcessMessageOptions): string {
+  const lines: string[] = [];
+  if (opts.workspaceRoot) lines.push(`Workspace: ${opts.workspaceRoot}`);
+  if (opts.relativeFile) lines.push(`File: ${opts.relativeFile}`);
+  if (opts.language) lines.push(`Language: ${opts.language}`);
+  if (opts.selectionText) {
+    let text = opts.selectionText;
+    if (text.length > MAX_SELECTION_CHARS) {
+      text = text.slice(0, MAX_SELECTION_CHARS) + "\n... [selection truncated]";
+    }
+    if (opts.selectionStartLine != null && opts.selectionEndLine != null) {
+      lines.push(`Selection (lines ${opts.selectionStartLine}-${opts.selectionEndLine}):`);
+    } else {
+      lines.push("Selection:");
+    }
+    lines.push(`\`\`\`${opts.language || ""}\n${text}\n\`\`\``);
+  }
+  if (lines.length === 0) return "";
+  return `[Editor context]\n${lines.join("\n")}\n\n[User message]\n`;
+}
+
 export class BrainOrchestrator {
   private llm: LLMProvider;
   private contextEngine: ContextEngine;
@@ -28,17 +51,8 @@ export class BrainOrchestrator {
     this.contextEngine = contextEngine || new ContextEngine(this.llm);
   }
 
-  private buildEditorContextBlock(opts: ProcessMessageOptions): string {
-    const lines: string[] = [];
-    if (opts.workspaceRoot) lines.push(`Workspace: ${opts.workspaceRoot}`);
-    if (opts.relativeFile) lines.push(`File: ${opts.relativeFile}`);
-    if (opts.language) lines.push(`Language: ${opts.language}`);
-    if (opts.selectionText) {
-      lines.push("Selection:");
-      lines.push(`\`\`\`${opts.language || ""}\n${opts.selectionText}\n\`\`\``);
-    }
-    if (lines.length === 0) return "";
-    return `[Editor context]\n${lines.join("\n")}\n\n[User message]\n`;
+  buildEditorContextBlock(opts: ProcessMessageOptions): string {
+    return buildEditorContextBlock(opts);
   }
 
   async processMessage(
